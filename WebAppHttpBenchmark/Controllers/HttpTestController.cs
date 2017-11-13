@@ -1,21 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Web;
-using System.Web.Mvc;
+using System.Web.Http;
 
 namespace WebAppHttpBenchmark.Controllers
 {
-    public class HomeController : Controller
+    public class HttpTestController : ApiController
     {
-        public async Task<ActionResult> Index(long AllocInMB = 0, int SleepInMS = 0, int LoopSpins = 0)
+        public async Task<HttpResponseMessage> Get(long AllocInMB = 0, int SleepInMS = 0, int LoopSpins = 0 , int MatrixSize = 0)
         {
             long memory = AllocInMB;
             int sleep = SleepInMS;
             long iterations = LoopSpins;
+            int matrixSize = MatrixSize;
             var rnd = new Random();
 
             // Allocate memory and fill it with random bytes
@@ -28,8 +26,15 @@ namespace WebAppHttpBenchmark.Controllers
             // Spin the CPU
             for (long i = 0; i < iterations; i++) { }
 
-            Response.Headers.Add("X-server", Environment.GetEnvironmentVariable("COMPUTERNAME"));
-            return Json("Done", JsonRequestBehavior.AllowGet);
+            // Do matrix multiplications
+            if (matrixSize > 0)
+            {
+                Matrix.DoMatrixMultiplication(matrixSize);
+            }
+
+            var response = Request.CreateResponse(HttpStatusCode.OK, "Done");
+            response.Headers.Add("X-server", Environment.GetEnvironmentVariable("COMPUTERNAME"));
+            return response;
         }
     }
 }
