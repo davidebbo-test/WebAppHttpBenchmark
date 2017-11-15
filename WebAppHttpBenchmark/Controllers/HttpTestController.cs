@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -8,12 +9,15 @@ namespace WebAppHttpBenchmark.Controllers
 {
     public class HttpTestController : ApiController
     {
-        public async Task<HttpResponseMessage> Get(long AllocInMB = 0, int SleepInMS = 0, int LoopSpins = 0 , int MatrixSize = 0)
+        private static HttpClient client = new HttpClient();
+
+        public async Task<HttpResponseMessage> Get(long AllocInMB = 0, int SleepInMS = 0, int LoopSpins = 0, int MatrixSize = 0, int Requests = 0)
         {
             long memory = AllocInMB;
             int sleep = SleepInMS;
             long iterations = LoopSpins;
             int matrixSize = MatrixSize;
+            int requests = Requests;
             var rnd = new Random();
 
             // Allocate memory and fill it with random bytes
@@ -30,6 +34,17 @@ namespace WebAppHttpBenchmark.Controllers
             if (matrixSize > 0)
             {
                 Matrix.DoMatrixMultiplication(matrixSize);
+            }
+
+            // Make some outbound http requests in parallel
+            if (requests > 0)
+            {
+                var tasks = new List<Task>();
+                for (int i = 0; i < requests; i++)
+                {
+                    tasks.Add(client.GetAsync("http://microsoft.com"));
+                }
+                await Task.WhenAll(tasks);
             }
 
             var response = Request.CreateResponse(HttpStatusCode.OK, "Done");
